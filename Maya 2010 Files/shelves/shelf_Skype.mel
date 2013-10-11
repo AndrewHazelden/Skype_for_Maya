@@ -1,0 +1,52 @@
+global proc shelf_Skype () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -align "center" 
+        -label "Call Test" 
+        -labelOffset 0
+        -font "tinyBoldLabelFont" 
+        -image "skypeCallTest.xpm" 
+        -image1 "skypeCallTest.xpm" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "import skypeCall\r\nreload(skypeCall)\r\nskypeCall.openSkypeCall('echo123')" 
+        -sourceType "python" 
+        -actionIsSubstitute 0
+        -commandRepeatable 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -align "center" 
+        -label "AddCall" 
+        -labelOffset 0
+        -font "tinyBoldLabelFont" 
+        -image "skypeNewContact.xpm" 
+        -image1 "skypeNewContact.xpm" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "source \"skypeAddContact.mel\";\r\nAddContactWindow();" 
+        -sourceType "mel" 
+        -actionIsSubstitute 0
+        -commandRepeatable 1
+    ;
+
+} 

@@ -1,0 +1,231 @@
+/*
+SkypeAddContact V1.0 Build 5 - Oct 11, 2013
+Call a Skype Contact to the Maya Shelf
+Script by Andrew Hazelden
+----------------------------------------------------
+Shelf tool name: AddCall
+icon: skypeNewContact.png
+
+Add a contact using the window GUI:
+source "skypeAddContact.mel";
+AddContactWindow();
+
+Add a contact directly:
+source "skypeAddContact.mel";
+addSkypeContact("Bill", "echo123", "skypeMiniCall.png", "Skype");
+
+*/
+
+//Create the Add Contact Window
+global proc AddContactWindow(){
+  global int $skypeWindowHeight = 140; //114
+  global int $skypeWindowWidth = 480;
+
+  if (`window -exists skypeContactWin`){
+      deleteUI skypeContactWin;
+      windowPref -remove skypeContactWin;
+      print("Reloading the Skype window elements.\n");
+  } else {
+    print("Creating the Skype Contact window.\n");
+  }
+
+  string $skypeContactWindow = `window 
+    -title "Add a Skype Contact" 
+    //-widthHeight $skypeWindowWidth $skypeWindowHeight 
+    skypeContactWin`; 
+
+  columnLayout 
+    -adjustableColumn true
+    skypeContactLayout;
+
+    textFieldGrp
+      -label "Skype ID"
+      -text  "echo123"
+      -annotation "Enter the user's Skype ID used to reach them. To phone the Skype call testing service enter \"echo123\"."
+      textSkypeID;
+      
+    textFieldGrp
+      -label "Nickname"
+      //-text  "Call"
+      -text  ""
+      -annotation "Add a nickname that will be used to label the Skype call-me button."
+      textSkypeShelfButtonName;
+    
+    //Check for Maya 2010 = an XPM Icon or Maya 2011+ = a PNG Icon
+    string $skypeCallIconName = "";
+    float $mayaVersion = getMayaVersion();
+    if ($mayaVersion >=2011){
+      //Show a PNG icon on Maya 2011 and newer
+      $skypeCallIconName = "skypeMiniCall.png";
+    } else {
+      //Show an XPM icon on Maya 2010 and older
+      $skypeCallIconName = "skypeMiniCall.xpm";
+    }
+    
+    textFieldGrp
+      -label "Shelf Icon"
+      -text $skypeCallIconName
+      -annotation "Enter the icon name you want to use for the Skype call-me shelf button. The image should be a 32x32px .png image file stored in your Maya Icons directory."
+      textSkypeShelfIcon;
+      
+
+    button 
+      -label "Add a Skype Contact"
+      -width 200
+      -annotation "Add a Skype Contact to your Maya Shelf."
+      -command "collectSkypeSettings();"
+    ;
+        
+    setParent ..;
+  
+  showWindow skypeContactWin;
+    
+  //Get the current window size
+  print ("\nSkype Contact Window Size: "  
+           + `window -q -width skypeContactWin` 
+           + " width " 
+           + `window -q -height skypeContactWin` 
+           + " height\n"); 
+}
+
+
+//Take the user data and pass it to the addSkypeContact function
+global proc collectSkypeSettings(){
+  string $skypeShelfName = "Skype";
+  
+  string $SkypeCommandString = "";
+  
+  $SkypeCommandString += "addSkypeContact(\"";
+  $SkypeCommandString += `textFieldGrp -query -text textSkypeShelfButtonName`;
+  $SkypeCommandString += "\",\"" + `textFieldGrp -query -text textSkypeID`;
+  $SkypeCommandString += "\",\""+ `textFieldGrp -query -text textSkypeShelfIcon`;
+  $SkypeCommandString += "\",\""+ $skypeShelfName + "\");";
+  
+  print ("Command: " + $SkypeCommandString + "\n");
+  eval($SkypeCommandString);
+}
+
+
+//Add a new Skype contact to the Maya Shelf
+//Usage: addSkypeContact("Bill", "echo123", "skypeMiniCall.png");
+global proc addSkypeContact( string $callerName, string $callerSkypeID, string $CallerIcon, string $skypeShelfName){
+  //Name of the shelf tab to place the Skype call buttons
+  //string $skypeShelfName = "Skype";
+
+  //Create a new Skype Button
+  //string $callerName = "Bill";
+  //string $callerSkypeID = "echo123";
+  //string $CallerIcon = "skypeMiniCall.png";
+  string $callerFunction = "import skypeCall\nreload(skypeCall)\nskypeCall.openSkypeCall('" + $callerSkypeID + "')";
+
+  //Check the operating system
+  string $mayaPlatform = getMayaPlatform();
+  // Check if we are running Maya 2011 or higher
+  float $mayaVersion = getMayaVersion();
+  // Write out the current Maya version number and detected operating system
+  //print("Maya " + $mayaVersion + " on " + $mayaPlatform  + " detected.\n");
+
+  if ($mayaVersion >=2011){
+    //Maya 2011 and newer style shelf
+    shelfButton
+      //-parent "Skype"
+      -parent $skypeShelfName
+      -enableCommandRepeat 1
+      -enable 1
+      -width 35
+      -height 35
+      -manage 1
+      -visible 1
+      -preventOverride 0
+      -annotation $callerName 
+      -enableBackground 0
+      -align "center" 
+      -label $callerName 
+      -labelOffset 0
+      -font "plainLabelFont" 
+      -imageOverlayLabel $callerName 
+      -overlayLabelColor 0.8 0.8 0.8 
+      -overlayLabelBackColor 0 0 0 0.8 
+      -image $CallerIcon
+      -image1 $CallerIcon
+      -style "iconOnly" 
+      -marginWidth 1
+      -marginHeight 1
+      -command $callerFunction 
+      -sourceType "python" 
+      -commandRepeatable 1
+      ;
+    }
+    else{
+      //Maya 2010 and older style shelf
+      shelfButton
+        //-parent "Skype"
+        -parent $skypeShelfName
+        -enableCommandRepeat 1
+        -enable 1
+        -width 34
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation $callerName 
+        -label $callerName 
+        -labelOffset 0
+        -font "tinyBoldLabelFont" 
+        -imageOverlayLabel $callerName 
+        -image $CallerIcon
+        -image1 $CallerIcon
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command $callerFunction 
+        -sourceType "python" 
+        -actionIsSubstitute 0
+        -commandRepeatable 1
+      ;
+    }
+    
+    //Summary
+    print("Added a new Skype Button for calling " + $callerName + ".\n");
+}
+
+
+//Check what Maya version is active
+global proc int getMayaVersion(){
+  // Check if we are running Maya 2011 or higher
+  float $mayaVersion = `getApplicationVersionAsFloat`;
+
+  // Test this GUI using the Maya 2010 - non-docked GUI mode
+  //float $mayaVersion = 2010;
+
+  // Write out the current Maya version number
+  //print("Maya " + $mayaVersion + " detected.\n");
+
+  return $mayaVersion;
+}
+
+  
+//Check the operating system
+global proc string getMayaPlatform(){
+  //-------------------------------------------------
+  //Get the current Maya Platform using python
+  //      The $mayaPlatform options are:
+  //          "windows", "darwin", "linux"
+  //-------------------------------------------------
+
+  string $mayaPlatform = "";
+  python( "import sys" );
+
+  if( python( "sys.platform == 'win32'" ) ){
+    $mayaPlatform = "windows";
+  }else if( python( "sys.platform == 'windows'" ) ){
+    $mayaPlatform = "windows";
+  }else if( python( "sys.platform == 'darwin'" ) ){
+    $mayaPlatform = "darwin";
+  }else {
+    $mayaPlatform = "linux";
+  }
+
+  //print("Running on " + $mayaPlatform + ".\n");
+  return $mayaPlatform;
+}
